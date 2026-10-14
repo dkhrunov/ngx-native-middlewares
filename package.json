@@ -4,7 +4,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/dkhrunov/ngx-native-middlewares.git"
+    "url": "https://github.com/dkhrunov/ngx-native-middlewares"
   },
   "scripts": {
     "ng": "ng",
