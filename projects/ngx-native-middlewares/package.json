@@ -1,0 +1,15 @@
+{
+  "name": "@dkhrunov/ngx-native-middlewares",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/core": ">=18.2.0 <23"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

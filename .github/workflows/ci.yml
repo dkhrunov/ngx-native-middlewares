@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, master, development]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build library
+        run: npm run build
+
+      - name: Preview next version
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -B "${{ github.base_ref }}"
+          OUTPUT=$(npx semantic-release --dry-run --no-ci 2>&1 | tee /dev/stderr) || true
+          VERSION=$(echo "$OUTPUT" | sed -n 's/.*The next release version is //p' | head -1 | tr -d '[:space:]')
+          echo "next=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "has_release=$([ -n "$VERSION" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Comment next version on PR
+        if: steps.version.outputs.has_release == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: semantic-release-version
+          message: |
+            ## Release preview
+
+            Next version from conventional commits: **`${{ steps.version.outputs.next }}`**
+
+      - name: Comment no release on PR
+        if: steps.version.outputs.has_release != 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: semantic-release-version
+          message: |
+            ## Release preview
+
+            No release for these commits (need `feat:`, `fix:`, `BREAKING CHANGE`, etc.).
